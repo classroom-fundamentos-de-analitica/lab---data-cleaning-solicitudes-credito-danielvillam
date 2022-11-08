@@ -7,71 +7,41 @@ correctamente. Tenga en cuenta datos faltantes y duplicados.
 
 """
 import pandas as pd
-from fuzzywuzzy import fuzz, process
-
 
 def clean_data():
 
-    df = pd.read_csv("solicitudes_credito.csv", sep=";")
+    df = pd.read_csv("solicitudes_credito.csv", sep=";", index_col=0)
 
-    #
-    # Inserte su código aquí
-    #
-
-    
-    df.sexo = df.sexo.astype('category').str.lower()
-    df.tipo_de_emprendimiento = df.tipo_de_emprendimiento.astype('category').str.lower()
-    df.idea_negocio = df.idea_negocio.astype('category').str.lower()
-    df.barrio = df.barrio.astype('category').str.lower()
-    df.estrato = df.estrato.astype('category')
-    df.comuna_ciudadano = df.comuna_ciudadano.astype(int).astype('category')
+    #Se modifican las columnas para un formato correcto
+    #Sexo
+    df.sexo = df.sexo.str.lower()
+    #tipo_de_emprendimiento
+    df.tipo_de_emprendimiento = df.tipo_de_emprendimiento.str.lower()
+    #idea_negocio
+    df.idea_negocio = df.idea_negocio.str.lower()
+    df.idea_negocio = df.idea_negocio.str.replace(' ', '_')
+    df.idea_negocio = df.idea_negocio.str.replace('-', '_')
+    #barrio
+    df.barrio = df.barrio.str.lower()
+    df.barrio = df.barrio.str.replace(' ', '_')
+    df.barrio = df.barrio.str.replace('-', '_')
+    #comuna_ciudadano
+    df.comuna_ciudadano = df.comuna_ciudadano.astype(int)
+    #fecha_de_beneficio
     df.fecha_de_beneficio = pd.to_datetime(df.fecha_de_beneficio, dayfirst=True)
-    df.línea_credito = df.línea_credito.str.lower().astype('category')
- 
-    
-
+    #monto_del_credito
     df.monto_del_credito = df.monto_del_credito.str.strip("$")
     df.monto_del_credito = df.monto_del_credito.str.replace(',','')
-    df.monto_del_credito = df.monto_del_credito.astype(float).astype(int)
-
+    df.monto_del_credito = df.monto_del_credito.astype(float)
+    #línea_credito
+    df.línea_credito = df.línea_credito.str.lower()
     df.línea_credito = df.línea_credito.str.replace(' ', '_')
+    df.línea_credito = df.línea_credito.str.replace('-', '_')
 
+    #Se eliminan las filas duplicadas y las columnas de los datos nan o faltantes
+    df.dropna(axis = 0, inplace = True)
+    df.drop_duplicates(inplace = True)
 
-    #Linea de formato de tipo despues de las correcciones
-    df.línea_credito = df.línea_credito.str.lower().astype('category')
-
-   
-    #df = df.drop_duplicates(inplace=True)
-
-    valid_lineas = ["agropecuaria", "ayacucho_formal", "credioportuno", "empresarial_ed.", "juridica_y_cap.semilla", "microempresarial", "solidaria", "fomento_agropecuario"]
-
-    df.línea_credito_ = df.línea_credito.copy()
-
-    #
-    # Valor mínimo de similitud para hacer el cambio
-    #
-    min_threshold = 80
-
-    #
-    # Estructuta básica
-    #
-    for valid_linea in valid_lineas:
-
-        potential_matches = process.extract(
-            valid_linea,
-            df.línea_credito,
-            limit=df.shape[0],
-        )
-
-        for potential_match in potential_matches:
-
-            if potential_match[1] >= min_threshold:
-
-                df.loc[df.línea_credito == potential_match[0], "línea_credito_"] = valid_linea
-
-    #print(df[~df.línea_credito.isin({'microempresarial','juridica_y_cap.semilla','fomento_agropecuario','agropecuaria', 'ayacucho_formal', 'empresarial_ed.','creditoportuno','solidaria'})])
-    #print(set(df.línea_credito).difference(valid_linea))
-    print(df)
     return df
 
 if __name__ == "__main__":
